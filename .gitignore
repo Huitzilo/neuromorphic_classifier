@@ -52,4 +52,8 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# custom stuff
 .spyderworkspace
+.spyderproject
+*~
