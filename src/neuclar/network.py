@@ -66,17 +66,6 @@ class BeeBrain(object):
             seed = seed + 1 # otherwise we get symmetric weights
             randomize_weights(prj, wmin_int, wmax_int, seed)
 
-    def retrieve_spikes(self, not_older_than=None):
-        raise(Exception('deprecated. Refactor to use spikemat format.'))
-        alspikes = self.AL.retrieve_spikes(not_older_than=not_older_than)
-        if not (self.MBcalyx is None):
-            mbspikes = self.MBcalyx.retrieve_spikes(not_older_than=not_older_than)
-        else:
-            mbspikes = numpy.array([], dtype=float)
-        decspikes = self.MBext.retrieve_spikes_dict(poplist=['dec_pops'],
-                                                not_older_than=not_older_than)
-        return alspikes, mbspikes, decspikes
-
     def get_predec_weightmat(self):
         """
         Return the weights of all connections targeting the decision layer.
