@@ -2,7 +2,7 @@
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-s", "--station", dest="workstation",
-                  help="spikey workstation to use", default="station603")
+                  help="spikey workstation to use", default="station309")
 parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int",
                   help="number of data samples from each class to use", default=200)
 
@@ -16,7 +16,7 @@ digits = [5,7]
 import numpy
 import pyNN.hardware.stage1 as p
 import neuclar.network_controller as netcontrol
-from neuclar.config import hardware_sparse_config as config
+from  neuclar.network_config import hardware_sparse_config as config
 config['network']['decision_pops'] = '2'
 import neuclar.data.mnist as mnist
 import neuclar.vrconvert as vrconvert
