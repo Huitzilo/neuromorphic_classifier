@@ -592,7 +592,7 @@ class Glomerulus():
                         for k,v in config['LN_params'].dict().items()])
         self.LNs = self._create_neuron_group(n_ln, ln_params)
 
-        self.sparseconnseed = 123123123123 # initial seed for sparsening the connmats
+        self.sparseconnseed = 1231231 # initial seed for sparsening the connmats
 
         self.driver_projmat = self._connect_drivers(self.drivers,
 #                                                  LNs=self.LNs,
