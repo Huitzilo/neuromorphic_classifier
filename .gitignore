@@ -57,3 +57,6 @@ target/
 .spyderworkspace
 .spyderproject
 *~
+logfile.txt
+spiketrain.in
+spikeyconfig.out
