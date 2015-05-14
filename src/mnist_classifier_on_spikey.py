@@ -5,12 +5,16 @@ parser.add_option("-s", "--station", dest="workstation",
                   help="spikey workstation to use", default="station309")
 parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int",
                   help="number of data samples from each class to use", default=200)
+parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used",
+                  default="5,7")
+
+
 
 options, args = parser.parse_args()
 
 workstation = options.workstation #default: 'station603'
 num_data_samples = options.num_data_samples # default: 200
-digits = [5,7]
+digits = [int(x) for x in options.digits_txt.split(',')]
 
 # imports
 import numpy
