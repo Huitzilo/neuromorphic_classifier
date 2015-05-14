@@ -18,7 +18,17 @@ digits = [int(x) for x in options.digits_txt.split(',')]
 
 # imports
 import numpy
-import pyNN.hardware.stage1 as p
+import sys
+try:
+	import pyNN.hardware.stage1 as p
+except ImportError, e:
+	print('ImportError: {}.\n'.format(e.message))
+	print("Failed to import the hardware PyNN module. Exiting.\n")
+	print("If you're interested in helping getting it to run\n" +\
+		  "a simulator (i.e. NEST), please refer to \n" +\
+		  "https://github.com/Huitzilo/neuromorphic_classifier\n" +\
+		  "and open an issue.")
+	sys.exit(1)
 import neuclar.network_controller as netcontrol
 from  neuclar.network_config import hardware_sparse_config as config
 config['network']['decision_pops'] = '2'
