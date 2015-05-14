@@ -23,11 +23,11 @@ try:
 	import pyNN.hardware.stage1 as p
 except ImportError, e:
 	print('ImportError: {}.\n'.format(e.message))
-	print("Failed to import the hardware PyNN module. Exiting.\n")
-	print("If you're interested in helping getting it to run\n" +\
-		  "a simulator (i.e. NEST), please refer to \n" +\
-		  "https://github.com/Huitzilo/neuromorphic_classifier\n" +\
-		  "and open an issue.")
+	print("Failed to import the hardware PyNN module. \n")
+	print("The current version of this script needs the Spikey hardware.")
+	print("I'll be glad to help you getting it to run a simulator (i.e. NEST).\n" +\
+		  "If you're interested, open an issue at \n" +\
+		  "https://github.com/Huitzilo/neuromorphic_classifier .")
 	sys.exit(1)
 import neuclar.network_controller as netcontrol
 from  neuclar.network_config import hardware_sparse_config as config
@@ -73,5 +73,3 @@ num_total = len(correct)
 percent_correct = float(num_correct)/float(num_total)
 
 print "Correctly classified %d out of %d (%.2f correct)"%(num_correct, num_total, percent_correct)
-print ""
-print "Neuromorphic computing rules."
