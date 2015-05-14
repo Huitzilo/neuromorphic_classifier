@@ -6,15 +6,17 @@ parser.add_option("-s", "--station", dest="workstation",
 parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int",
                   help="number of data samples from each class to use", default=200)
 parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used",
-                  default="5,7")
-
+                  default="5,7", type="string")
+parser.add_option("-o", "--output_file", dest='output_file', type="string", default=None)
 
 
 options, args = parser.parse_args()
 
-workstation = options.workstation #default: 'station603'
-num_data_samples = options.num_data_samples # default: 200
+workstation = options.workstation 
+num_data_samples = options.num_data_samples
 digits = [int(x) for x in options.digits_txt.split(',')]
+output_file_name = options.output_file
+
 
 # imports
 import numpy
@@ -73,3 +75,26 @@ num_total = len(correct)
 percent_correct = float(num_correct)/float(num_total)
 
 print "Correctly classified %d out of %d (%.2f correct)"%(num_correct, num_total, percent_correct)
+
+if not(output_file_name is None):
+	import os
+	import time
+	if output_file_name in os.listdir('.'):
+		print('Output file {} exists.'.format(output_file_name))
+		import tempfile
+		fdll, output_file_name = tempfile.mkstemp(suffix=output_file_name, prefix="", dir='.')
+		print("using {} instead.".format(output_file_name))
+	fd = open(output_file_name, 'w')
+	resultlines = []
+	resultlines.append("{}\n\n".format(time.asctime()))
+	resultlines.append("Digits: {}\n".format(digits))
+	resultlines.append("max. num. samples: {}\n\n".format(num_data_samples))
+	resultlines.append("Correctly classified %d out of %d (%.2f correct)\n"%(num_correct, num_total, percent_correct))
+	resultlines.append("\n\n")
+	resultlines.append("target\tpredicted\n")
+	resultlines.append("------\t---------\n")
+	for t,p in zip(testing_labels, test_results):
+		resultlines.append("{}\t{}\n".format(t, class_ids[numpy.argmax(p)]))
+	fd.writelines(resultlines)
+	fd.close()
+				   
