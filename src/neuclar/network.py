@@ -34,8 +34,8 @@ class BeeBrain(object):
         self.config = config
         self.AL = AntennalLobe(pynn, config)
         mbtype = config['network']['MB_type']
-        assert(mbtype=='AL', 
-               'mbtype "{}" not supported in this version'.format(mbtype))
+        assert mbtype=='AL', \
+               'mbtype "{}" not supported in this version'.format(mbtype)
         self.MBcalyx = None
         self.MBext = AttractorDecisionCircuit(pynn, config)
         self.pre_dec = None # array of projections targeting the decision layer.
