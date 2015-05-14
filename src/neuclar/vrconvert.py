@@ -13,6 +13,7 @@ lg = logging.getLogger(os.path.basename(__file__))
 lg.setLevel(logging.INFO)
 
 import numpy
+import mdp
 datapath = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'data')
 
 mnist_samplepoints = numpy.load(os.path.join(datapath, 'mnist_vrec_pos.npy'))
