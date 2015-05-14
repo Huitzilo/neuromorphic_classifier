@@ -77,7 +77,7 @@ class BrainController(object):
         self.config = config
         self.stim = 0
         self.brain = BeeBrain(pynn, config)
-        assert config['simulation']['calib_AL'] == 'False'\
+        assert (config['simulation']['calib_AL'] == 'False'),\
                "This version does not support AL calibration."
         if self.config['network'].has_key('randomize_weights_pndriver'):
             # driver -> PNs
