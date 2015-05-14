@@ -4,7 +4,7 @@ parser = OptionParser()
 parser.add_option("-s", "--station", dest="workstation",
                   help="spikey workstation to use", default="station666")
 parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int",
-                  help="number of data samples from each class to use", default=200)
+                  help="total number of data samples to use", default=200)
 parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used",
                   default="5,7", type="string")
 parser.add_option("-o", "--output_file", dest='output_file', type="string", default=None)
@@ -72,9 +72,11 @@ correct = [i==il for i,il in zip(ind_pred,ind_target)]
 
 num_correct = sum(correct)
 num_total = len(correct)
-percent_correct = float(num_correct)/float(num_total)
+percent_correct = 100.*float(num_correct)/float(num_total)
 
-print "Correctly classified %d out of %d (%.2f correct)"%(num_correct, num_total, percent_correct)
+print "Correctly classified {} out of {} ({:.2f} % correct)".format(num_correct,
+								    num_total,
+								    percent_correct)
 
 if not(output_file_name is None):
 	import os
@@ -89,7 +91,9 @@ if not(output_file_name is None):
 	resultlines.append("{}\n\n".format(time.asctime()))
 	resultlines.append("Digits: {}\n".format(digits))
 	resultlines.append("max. num. samples: {}\n\n".format(num_data_samples))
-	resultlines.append("Correctly classified %d out of %d (%.2f correct)\n"%(num_correct, num_total, percent_correct))
+	resultlines.append("{:.2f} % correct ({} out of {})\n".format(percent_correct,
+								      num_correct,
+								      num_total))
 	resultlines.append("\n\n")
 	resultlines.append("target\tpredicted\n")
 	resultlines.append("------\t---------\n")
