@@ -7,8 +7,11 @@ parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int
                   help="total number of data samples to use", default=200)
 parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used",
                   default="5,7", type="string")
-parser.add_option("-o", "--output_file", dest='output_file', type="string", default=None)
-
+parser.add_option("-o", "--output_file", dest='output_file', type="string",
+		  help="put detailed results in this file", default=None)
+parser.add_option("-r", "--retrain_VRs", dest='retrain_VRs', action='store_true',
+		  help='train a new Neural Gas instead of reusing default VRs',
+		  default=False)
 
 options, args = parser.parse_args()
 
@@ -16,11 +19,16 @@ workstation = options.workstation
 num_data_samples = options.num_data_samples
 digits = [int(x) for x in options.digits_txt.split(',')]
 output_file_name = options.output_file
-
+retrain = options.retrain_VRs
 
 # imports
 import numpy
 import sys
+import time
+import logging
+logging.basicConfig()
+lg = logging.getLogger('mnist_classifier_on_spikey')
+lg.setLevel(logging.INFO)
 try:
 	import pyNN.hardware.stage1 as p
 except ImportError, e:
@@ -45,8 +53,18 @@ training_data, training_labels = mnist.get_training_data(digits, num_data_sample
 testing_data, testing_labels = mnist.get_training_data(digits, num_data_samples)
 
 # convert data with VRs
-training_data_vr = vrconvert.vrconvert(training_data, vrconvert.mnist_samplepoints)
-testing_data_vr = vrconvert.vrconvert(testing_data, vrconvert.mnist_samplepoints)
+if retrain:
+	posfilename = "vrpos-{}-{}.npy".format(['{}'.format(d) for d in digits],
+					       time.strftime("%Y-%m-%d-%H-%M-%S"))
+	lg.info("computing new VR positions, storing them to {}".format(posfilename))
+	vrs = vrconvert.NeuralGasSampler()
+	vrs.train_sampler(numpy.array(training_data, dtype=float), vrconvert.neural_gas_parameters)
+	numpy.save(posfilename, vrs.samplepoints)
+	training_data_vr = vrs.sample_data(training_data)
+	testing_data_vr = vrs.sample_data(testing_data)
+else:
+	training_data_vr = vrconvert.vrconvert(training_data, vrconvert.mnist_samplepoints)
+	testing_data_vr = vrconvert.vrconvert(testing_data, vrconvert.mnist_samplepoints)
 
 # make data right format
 training_patterns = [("mnist_%d"%i, training_data_vr[i], training_labels[i])
@@ -80,7 +98,6 @@ print "Correctly classified {} out of {} ({:.2f} % correct)".format(num_correct,
 
 if not(output_file_name is None):
 	import os
-	import time
 	if output_file_name in os.listdir('.'):
 		print('Output file {} exists.'.format(output_file_name))
 		import tempfile
