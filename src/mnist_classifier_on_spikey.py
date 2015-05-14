@@ -2,7 +2,7 @@
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-s", "--station", dest="workstation",
-                  help="spikey workstation to use", default="station309")
+                  help="spikey workstation to use", default="station666")
 parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int",
                   help="number of data samples from each class to use", default=200)
 parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used",
