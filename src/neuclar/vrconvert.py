@@ -18,6 +18,21 @@ datapath = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'data')
 mnist_samplepoints = numpy.load(os.path.join(datapath, 'mnist_vrec_pos.npy'))
 iris_samplepoints = numpy.load(os.path.join(datapath, 'iris_vrec_pos.npy'))
 
+neural_gas_parameters = {
+    'num_nodes': 10,
+    'start_poss': None,
+    'epsilon_i': 0.3,               # initial epsilon
+    'epsilon_f': 0.05,              # final epsilon
+    'lambda_i': 30.,                 # initial lambda
+    'lambda_f': 0.01,                 # final lambda
+    'max_age_i': 20,                # initial edge lifetime
+    'max_age_f': 200,               # final edge lifetime
+    'max_epochs': 50.,
+    'n_epochs_to_train': None,
+    'input_dim': None,
+    'dtype': None
+}
+
 def vrconvert(data, samplepoints):
     vrs = VirtualReceptorSampler()
     vrs.set_samplepoints(samplepoints)
@@ -96,7 +111,31 @@ class VirtualReceptorSampler(object):
         return res
 
 
+class NeuralGasSampler(VirtualReceptorSampler):
+    """
+    Samples the data with a neural gas.
+    """
+    def train_sampler(self, data, sampler_config):
+        """
+        Train the sampler to efficiently sample the data.
 
+        Parameters:
+        data - the data to sample, NxM array, with N data points of dimension M.
+        sampler_config - dictionary with parameters for the neural gas.
+        """
+        num_nodes = sampler_config['num_nodes']
+        # randomly sample num_nodes data points as initial node position
+        initial = mdp.numx.take(data,
+                                mdp.numx.random.random_integers(high=len(data)-1,
+                                                                low=0,
+                                                                size=num_nodes),
+                                axis=0)
+        sampler_config['start_poss'] = initial
+        ng = mdp.nodes.NeuralGasNode(**sampler_config)
+        ng.train(data)
+        self.samplepoints = ng.get_nodes_position()
+        self.ng = ng
+        self.sampler_config = sampler_config
 
 
 
