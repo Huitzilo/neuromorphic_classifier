@@ -68,7 +68,7 @@ def get_testing_data(digits, num_samples):
     digits - list of digits to read (list of int)
     num_samples - number of samples (int)
     """
-    img,data = read_mnist(digits, dataset='testing')
+    img,lab = read_mnist(digits, dataset='testing')
     img = img[:num_samples,:]
     lab = lab[:num_samples]
     return img, lab    
