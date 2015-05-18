@@ -41,7 +41,7 @@ except ImportError, e:
 	sys.exit(1)
 import neuclar.network_controller as netcontrol
 from  neuclar.network_config import hardware_sparse_config as config
-config['network']['decision_pops'] = '2'
+config['network']['decision_pops'] = '{}'.format(len(digits))
 import neuclar.data.mnist as mnist
 import neuclar.vrconvert as vrconvert
 
