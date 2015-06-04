@@ -145,7 +145,7 @@ class BrainController(object):
                'dec_inh': decinhspikes}
         return ret
 
-    def test_pattern(self, pattern_tuple, class_ids='not used'):
+    def test_pattern(self, pattern_tuple, class_ids='not used', timing_dict=None):
         """
         Present the pattern and determine the network's choice.
 
@@ -156,7 +156,10 @@ class BrainController(object):
                             (id, pattern, classlabel)
         class_ids - list of strings containing all possible class labels (not 
                         used but necessary in classifiers)
+        timing_dict - dictionary in which times for 'run' and 'manage' will be
+                    stored (for benchamrking).
         """
+        start_time = time.time()
         lg.info('testing pattern.')
         self.stim +=1
         id = pattern_tuple[0]
@@ -164,7 +167,9 @@ class BrainController(object):
         target = pattern_tuple[2]
         self.set_pattern(pattern)
         duration = self.config['simulation'].as_float('duration')
+        pre_run_time = time.time()
         self.run_network(duration)
+        post_run_time = time.time()
         if self.pynn.__package__ == 'pyNN.hardware':
             t_back = None
         else:
@@ -174,10 +179,15 @@ class BrainController(object):
         dec_pop_rates = numpy.mean(dn_spikecounts, axis=1)
         lg.info('pattern %s %s %s yielded response %s'%(id, str(pattern),
                                                 target, str(dec_pop_rates)))        
+        end_time = time.time()
+        if not (timing_dict is None):
+            timing_dict['total_test'] = end_time - start_time
+            timing_dict['run'] = post_run_time - pre_run_time
+            timing_dict['manage_test'] = end_time - start_time - (post_run_time - pre_run_time)
         return dec_pop_rates
     
         
-    def learn_pattern(self, pattern_tuple, class_ids):
+    def learn_pattern(self, pattern_tuple, class_ids, timing_dict=None):
         """
         Present a pattern and update the weights in the network according to the
         Fusi learning rule.
@@ -190,10 +200,15 @@ class BrainController(object):
         pattern_tuple - pattern tuple as returned from PatternServer
                             (id, pattern, classlabel)
         class_ids - list of strings containing all possible class labels
+        timing_dict - dictionary in which times for 'run' and 'manage' will be
+                    stored (for benchmarking).
+
         """
+        start_time = time.time()
         lg.info('performing learning.')
         # determine winner population and class
-        dec_pop_rates = self.test_pattern(pattern_tuple)
+        dec_pop_rates = self.test_pattern(pattern_tuple, timing_dict=timing_dict)
+        post_test_time = time.time()
         id = pattern_tuple[0]
         target = pattern_tuple[2]
         winner = numpy.argmax(dec_pop_rates)
@@ -221,6 +236,9 @@ class BrainController(object):
             lg.info('Classifier: %s %s -> %s.'%(id, target, 'no output spikes'))
             # increase all weights by one step
             self.change_predec_weights_const(0.005/15.)
+        end_time = time.time()
+        if not (timing_dict is None):
+            timing_dict['total_train'] = end_time - start_time
         return dec_pop_rates
 
     def change_predec_weights_const(self, dw):
