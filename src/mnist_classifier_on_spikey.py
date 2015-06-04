@@ -42,15 +42,22 @@ except ImportError, e:
 import neuclar.network_controller as netcontrol
 from  neuclar.network_config import hardware_sparse_config as config
 config['network']['decision_pops'] = '{}'.format(len(digits))
+# have to reduce the neuron count in the decision pop to fit in five digits, 
+config['network']['num_dec_neurons'] = '6'
+config['network']['num_inh_dec_neurons'] = '6'
 import neuclar.data.mnist as mnist
 import neuclar.vrconvert as vrconvert
 
+start_time = time.time()
+
 # doing the stuff
 p.setup(workStationName=workstation)
+setup_time = time.time()
 
 # load data
 training_data, training_labels = mnist.get_training_data(digits, num_data_samples)
 testing_data, testing_labels = mnist.get_training_data(digits, num_data_samples)
+load_data_time = time.time()
 
 # convert data with VRs
 if retrain:
@@ -73,15 +80,22 @@ testing_patterns = [("mnist_%d"%i, testing_data_vr[i], testing_labels[i])
                                              for i in range(len(testing_labels))]
 class_ids = list(set(training_labels))
 
+convert_data_time = time.time()
+
 # set up classifier network
 bc = netcontrol.BrainController(p, config)
 bc.brain.wire_AL_to_MBext()
 bc.brain.reinit_random_weights()
+build_network_time = time.time()
 
 # train the network
 for tp in training_patterns:
     bc.learn_pattern(tp, class_ids)
+train_time = time.time()
+
+# assess test set
 test_results = [bc.test_pattern(tp) for tp in testing_patterns]
+test_time = time.time()
 
 # assess percent correct
 ind_pred = [numpy.argmax(tr) for tr in test_results]
@@ -95,6 +109,18 @@ percent_correct = 100.*float(num_correct)/float(num_total)
 print "Correctly classified {} out of {} ({:.2f} % correct)".format(num_correct,
 								    num_total,
 								    percent_correct)
+calc_result_time = time.time()
+
+timings = {"setup":setup_time - start_time,
+	   "load_data":load_data_time - setup_time,
+	   "convert_data": convert_time - load_time,
+	   "build_network": build_network_time - convert_time,
+	   "train": train_time - build_network_time,
+	   "test": test_time - train_time,
+	   "calc_result": calc_result_time - test_time,
+	   "total": calc_result_time - start_time}
+	
+
 
 if not(output_file_name is None):
 	import os
@@ -111,6 +137,18 @@ if not(output_file_name is None):
 	resultlines.append("{:.2f} % correct ({} out of {})\n".format(percent_correct,
 								      num_correct,
 								      num_total))
+	resultlines.append("\n\n")
+	resultlines.append("Timings:\n")
+	timing_names = ['setup',
+		   'load_data',
+		   'convert_data',
+		   'build_network',
+		   'train',
+		   'test',
+		   'calc_result',
+		   'total']
+	for timing in timing_names:
+		resultlines.append("{:<15s}: {:.3g} s\n".format(timings[timing]))
 	resultlines.append("\n\n")
 	resultlines.append("target\tpredicted\n")
 	resultlines.append("------\t---------\n")
