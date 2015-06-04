@@ -43,8 +43,8 @@ import neuclar.network_controller as netcontrol
 from  neuclar.network_config import hardware_sparse_config as config
 config['network']['decision_pops'] = '{}'.format(len(digits))
 # have to reduce the neuron count in the decision pop to fit in five digits, 
-config['network']['num_dec_neurons'] = '6'
-config['network']['num_inh_dec_neurons'] = '6'
+#config['network']['num_dec_neurons'] = '6'
+#config['network']['num_inh_dec_neurons'] = '6'
 import neuclar.data.mnist as mnist
 import neuclar.vrconvert as vrconvert
 
@@ -61,7 +61,7 @@ load_data_time = time.time()
 
 # convert data with VRs
 if retrain:
-	posfilename = "vrpos-{}-{}.npy".format(['{}'.format(d) for d in digits],
+	posfilename = "vrpos-{}-{}.npy".format("".join(['{}'.format(d) for d in digits]),
 					       time.strftime("%Y-%m-%d-%H-%M-%S"))
 	lg.info("computing new VR positions, storing them to {}".format(posfilename))
 	vrs = vrconvert.NeuralGasSampler()
@@ -89,12 +89,24 @@ bc.brain.reinit_random_weights()
 build_network_time = time.time()
 
 # train the network
+train_time_neuclar = 0. #the total time spent in training code on the neuclar side
+train_time_pynn = 0. # time spent on the PyNN side 
+timing_dict = {}
 for tp in training_patterns:
-    bc.learn_pattern(tp, class_ids)
+    bc.learn_pattern(tp, class_ids, timing_dict=timing_dict)
+    train_time_neuclar += timing_dict['total_train'] - timing_dict['run']
+    train_time_pynn += timing_dict['run']
 train_time = time.time()
 
 # assess test set
-test_results = [bc.test_pattern(tp) for tp in testing_patterns]
+test_results = []
+test_time_neuclar = 0.
+test_time_pynn = 0.
+timing_dict = {}
+for tp in testing_patterns:
+	test_results.append(bc.test_pattern(tp, timing_dict=timing_dict))
+	test_time_neuclar += timing_dict['manage_test']
+	test_time_pynn += timing_dict['run']
 test_time = time.time()
 
 # assess percent correct
@@ -113,10 +125,14 @@ calc_result_time = time.time()
 
 timings = {"setup":setup_time - start_time,
 	   "load_data":load_data_time - setup_time,
-	   "convert_data": convert_time - load_time,
-	   "build_network": build_network_time - convert_time,
+	   "convert_data": convert_data_time - load_data_time,
+	   "build_network": build_network_time - convert_data_time,
 	   "train": train_time - build_network_time,
+	   "train_neuclar": train_time_neuclar,
+	   "train_pynn": train_time_pynn,
 	   "test": test_time - train_time,
+	   "test_neuclar": test_time_neuclar,
+	   "test_pynn": test_time_pynn,
 	   "calc_result": calc_result_time - test_time,
 	   "total": calc_result_time - start_time}
 	
@@ -144,11 +160,15 @@ if not(output_file_name is None):
 		   'convert_data',
 		   'build_network',
 		   'train',
+		   'train_neuclar',
+		   'train_pynn',
 		   'test',
+		   'test_neuclar',
+		   'test_pynn',
 		   'calc_result',
 		   'total']
 	for timing in timing_names:
-		resultlines.append("{:<15s}: {:.3g} s\n".format(timings[timing]))
+		resultlines.append("{:<15s}: {:.4f} s\n".format(timing, timings[timing]))
 	resultlines.append("\n\n")
 	resultlines.append("target\tpredicted\n")
 	resultlines.append("------\t---------\n")
