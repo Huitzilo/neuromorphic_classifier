@@ -70,8 +70,10 @@ if retrain:
 	training_data_vr = vrs.sample_data(training_data)
 	testing_data_vr = vrs.sample_data(testing_data)
 else:
-	training_data_vr = vrconvert.vrconvert(training_data, vrconvert.mnist_samplepoints)
-	testing_data_vr = vrconvert.vrconvert(testing_data, vrconvert.mnist_samplepoints)
+	vrposfilename = "vrpos-{}_{}.npy".format("".join(["{}".format(d) for d in digits]), num_data_samples)
+	samplepoints = numpy.load(vrposfilename)
+	training_data_vr = vrconvert.vrconvert(training_data, samplepoints)
+	testing_data_vr = vrconvert.vrconvert(testing_data, samplepoints)
 
 # make data right format
 training_patterns = [("mnist_%d"%i, training_data_vr[i], training_labels[i])
