@@ -27,7 +27,9 @@ num_data_samples = options.num_data_samples
 digits = [int(x) for x in options.digits_txt.split(',')]
 output_file_name = options.output_file
 retrain = options.retrain_VRs
-save_spiketrains = options.save_spiketrains
+save_spiketrains = not(options.save_spiketrains == 'no_store')
+if save_spiketrains:
+	savefilename = options.save_spiketrains
 
 # imports
 import numpy
@@ -95,11 +97,11 @@ convert_data_time = time.time()
 if save_spiketrains:
     import cPickle
     #initialise the save file
-    savefilename = 'spiketrains.pkl'
-    cPickle.dump({'train':[], 'test':[]}, savefilename)
+    with open(savefilename, 'w') as savefile:
+	    cPickle.dump({'train':[], 'test':[]}, savefile)
     # record all neurons
-    config['network']['record_AL'] = "PNs, LNs, drivers"
-    config['network']['record_MBext'] = "Dec, Inh"
+    config['network']['record_AL'] = ["LNs", "PNs", "drivers"]
+    config['network']['record_MBext'] = ["Dec", "Inh"]
 
 # set up classifier network
 bc = netcontrol.BrainController(p, config)
@@ -115,10 +117,12 @@ for tp in training_patterns:
     bc.learn_pattern(tp, class_ids, timing_dict=timing_dict)
     if save_spiketrains:
         st = bc.get_spikes()
-        st['pattern_name'] = tp[0]
-        savedict = cPickle.load(savefilename)
-        savedict['train'].append(st)
-        cPickle.dump(savedict, savefilename)
+	with open(savefilename, 'r') as savefile:
+		st['pattern_name'] = tp[0]
+		savedict = cPickle.load(savefile)
+		savedict['train'].append(st)
+	with open(savefilename, 'w') as savefile:
+		cPickle.dump(savedict, savefile)
     train_time_neuclar += timing_dict['total_train'] - timing_dict['run']
     train_time_pynn += timing_dict['run']
 train_time = time.time()
@@ -131,11 +135,13 @@ timing_dict = {}
 for tp in testing_patterns:
     test_results.append(bc.test_pattern(tp, timing_dict=timing_dict))
     if save_spiketrains:
-        st = bc.get_spikes()
-        st['pattern_name'] = tp[0]
-        savedict = cPickle.load(savefilename)
-        savedict['test'].append(st)
-        cPickle.dump(savedict, savefilename)
+	st = bc.get_spikes()
+	with open(savefilename, 'r') as savefile:
+		st['pattern_name'] = tp[0]
+		savedict = cPickle.load(savefile)
+		savedict['test'].append(st)
+	with open(savefilename, 'w') as savefile:
+		cPickle.dump(savedict, savefile)
     test_time_neuclar += timing_dict['manage_test']
     test_time_pynn += timing_dict['run']
 test_time = time.time()
