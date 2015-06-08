@@ -12,6 +12,13 @@ parser.add_option("-o", "--output_file", dest='output_file', type="string",
 parser.add_option("-r", "--retrain_VRs", dest='retrain_VRs', action='store_true',
 		  help='train a new Neural Gas instead of reusing default VRs',
 		  default=False)
+parser.add_option("--save_spiketrains", dest="save_spiketrains", 
+                  type='string', default='no_store',
+                  help="specify a file in which to store the spike trains.\n" + 
+                       "The spiketrains will be stored in a file named \n" + 
+                       "'spiketrains.pkl' as a pickled dictionary,\n"+
+                       "with keys 'train' and 'test', each containing a list of\n" +
+                       "dictionaries that containing the actual spike trains.\n")
 
 options, args = parser.parse_args()
 
@@ -20,6 +27,7 @@ num_data_samples = options.num_data_samples
 digits = [int(x) for x in options.digits_txt.split(',')]
 output_file_name = options.output_file
 retrain = options.retrain_VRs
+save_spiketrains = options.save_spiketrains
 
 # imports
 import numpy
@@ -84,6 +92,15 @@ class_ids = list(set(training_labels))
 
 convert_data_time = time.time()
 
+if save_spiketrains:
+    import cPickle
+    #initialise the save file
+    savefilename = 'spiketrains.pkl'
+    cPickle.dump({'train':[], 'test':[]}, savefilename)
+    # record all neurons
+    config['network']['record_AL'] = "PNs, LNs, drivers"
+    config['network']['record_MBext'] = "Dec, Inh"
+
 # set up classifier network
 bc = netcontrol.BrainController(p, config)
 bc.brain.wire_AL_to_MBext()
@@ -96,6 +113,12 @@ train_time_pynn = 0. # time spent on the PyNN side
 timing_dict = {}
 for tp in training_patterns:
     bc.learn_pattern(tp, class_ids, timing_dict=timing_dict)
+    if save_spiketrains:
+        st = bc.get_spikes()
+        st['pattern_name'] = tp[0]
+        savedict = cPickle.load(savefilename)
+        savedict['train'].append(st)
+        cPickle.dump(savedict, savefilename)
     train_time_neuclar += timing_dict['total_train'] - timing_dict['run']
     train_time_pynn += timing_dict['run']
 train_time = time.time()
@@ -106,9 +129,15 @@ test_time_neuclar = 0.
 test_time_pynn = 0.
 timing_dict = {}
 for tp in testing_patterns:
-	test_results.append(bc.test_pattern(tp, timing_dict=timing_dict))
-	test_time_neuclar += timing_dict['manage_test']
-	test_time_pynn += timing_dict['run']
+    test_results.append(bc.test_pattern(tp, timing_dict=timing_dict))
+    if save_spiketrains:
+        st = bc.get_spikes()
+        st['pattern_name'] = tp[0]
+        savedict = cPickle.load(savefilename)
+        savedict['test'].append(st)
+        cPickle.dump(savedict, savefilename)
+    test_time_neuclar += timing_dict['manage_test']
+    test_time_pynn += timing_dict['run']
 test_time = time.time()
 
 # assess percent correct
@@ -170,12 +199,15 @@ if not(output_file_name is None):
 		   'calc_result',
 		   'total']
 	for timing in timing_names:
-		resultlines.append("{:<15s}: {:.4f} s\n".format(timing, timings[timing]))
+         resultlines.append("{:<15s}: {:.4f} s\n".format(timing, timings[timing]))
+	if save_spiketrains:
+         resultlines.append("\n\nSpikes have been saved to {}.".format(savefilename))
+         resultlines.append("Saving spikes may have caused significant run time overhead.")
 	resultlines.append("\n\n")
 	resultlines.append("target\tpredicted\n")
 	resultlines.append("------\t---------\n")
-	for t,p in zip(testing_labels, test_results):
-		resultlines.append("{}\t{}\n".format(t, class_ids[numpy.argmax(p)]))
+	for t,pred in zip(testing_labels, test_results):
+         resultlines.append("{}\t{}\n".format(t, class_ids[numpy.argmax(pred)]))
 	fd.writelines(resultlines)
 	fd.close()
 				   
