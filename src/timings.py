@@ -29,7 +29,7 @@ class NeuclarTimings(object):
         self.training_times['identify_winner_pop'] += (
                                         timing_dict['compute_rates'] + 
                                         timing_dict['assess_classification'])
-        self.training_times['compute_updated_weights'] += 
+        self.training_times['compute_updated_weights'] += \
                                         timing_dict['compute_new_weights']
         self.training_times['total_train'] += timing_dict['total_train']
     
