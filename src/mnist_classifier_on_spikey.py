@@ -57,6 +57,7 @@ config['network']['decision_pops'] = '{}'.format(len(digits))
 #config['network']['num_inh_dec_neurons'] = '6'
 import neuclar.data.mnist as mnist
 import neuclar.vrconvert as vrconvert
+from timings import NeuclarTimings
 
 start_time = time.time()
 
@@ -110,43 +111,37 @@ bc.brain.reinit_random_weights()
 build_network_time = time.time()
 
 # train the network
-train_time_neuclar = 0. #the total time spent in training code on the neuclar side
-train_time_pynn = 0. # time spent on the PyNN side 
+nt = NeuclarTimings()
 timing_dict = {}
 for tp in training_patterns:
     bc.learn_pattern(tp, class_ids, timing_dict=timing_dict)
     if save_spiketrains:
         st = bc.get_spikes()
-	with open(savefilename, 'r') as savefile:
-		st['pattern_name'] = tp[0]
-		savedict = cPickle.load(savefile)
-		savedict['train'].append(st)
-	with open(savefilename, 'w') as savefile:
-		cPickle.dump(savedict, savefile)
-    train_time_neuclar += timing_dict['total_train'] - timing_dict['run']
-    train_time_pynn += timing_dict['run']
-train_time = time.time()
+        with open(savefilename, 'r') as savefile:
+            st['pattern_name'] = tp[0]
+            savedict = cPickle.load(savefile)
+            savedict['train'].append(st)
+        with open(savefilename, 'w') as savefile:
+            cPickle.dump(savedict, savefile)
+    nt.update_training_times(timing_dict)
 
 # assess test set
 test_results = []
-test_time_neuclar = 0.
-test_time_pynn = 0.
 timing_dict = {}
 for tp in testing_patterns:
     test_results.append(bc.test_pattern(tp, timing_dict=timing_dict))
     if save_spiketrains:
-	st = bc.get_spikes()
-	with open(savefilename, 'r') as savefile:
-		st['pattern_name'] = tp[0]
-		savedict = cPickle.load(savefile)
-		savedict['test'].append(st)
-	with open(savefilename, 'w') as savefile:
-		cPickle.dump(savedict, savefile)
-    test_time_neuclar += timing_dict['manage_test']
-    test_time_pynn += timing_dict['run']
-test_time = time.time()
+        st = bc.get_spikes()
+        with open(savefilename, 'r') as savefile:
+            st['pattern_name'] = tp[0]
+            savedict = cPickle.load(savefile)
+            savedict['test'].append(st)
+        with open(savefilename, 'w') as savefile:
+            cPickle.dump(savedict, savefile)
+    nt.update_testing_times(timing_dict)
 
 # assess percent correct
+test_class_time = time.time()
 ind_pred = [numpy.argmax(tr) for tr in test_results]
 ind_target = [class_ids.index(l) for l in testing_labels]
 correct = [i==il for i,il in zip(ind_pred,ind_target)]
@@ -154,24 +149,29 @@ correct = [i==il for i,il in zip(ind_pred,ind_target)]
 num_correct = sum(correct)
 num_total = len(correct)
 percent_correct = 100.*float(num_correct)/float(num_total)
+test_class_time = time.time() - test_class_time
+
 
 print "Correctly classified {} out of {} ({:.2f} % correct)".format(num_correct,
 								    num_total,
 								    percent_correct)
-calc_result_time = time.time()
+end_time = time.time()
 
 timings = {"setup":setup_time - start_time,
 	   "load_data":load_data_time - setup_time,
 	   "convert_data": convert_data_time - load_data_time,
 	   "build_network": build_network_time - convert_data_time,
-	   "train": train_time - build_network_time,
-	   "train_neuclar": train_time_neuclar,
-	   "train_pynn": train_time_pynn,
-	   "test": test_time - train_time,
-	   "test_neuclar": test_time_neuclar,
-	   "test_pynn": test_time_pynn,
-	   "calc_result": calc_result_time - test_time,
-	   "total": calc_result_time - start_time}
+	   "train": nt.training_times['total_train'],
+	   "train_create_spikes": nt.training_times['create_spike_trains'],
+        "train_run": nt.training_times['run'],
+        "train_find_winner": nt.training_times['identify_winner_pop'],
+        "train_compute_weights": nt.training_times['compute_updated_weights'],
+	   "test": nt.testing_times['total_test'],
+        "test_create_spikes": nt.testing_times['create_spike_trains'],
+        "test_run": nt.testing_times['run'],
+        "test_find_winner": nt.testing_times['identify_winner_pop'] + \
+                                                            test_class_time,
+	   "total": end_time - start_time}
 	
 
 
@@ -197,12 +197,14 @@ if not(output_file_name is None):
 		   'convert_data',
 		   'build_network',
 		   'train',
-		   'train_neuclar',
-		   'train_pynn',
+        	   'train_create_spikes',
+             'train_run',
+             'train_find_winner',
+             'train_compute_weights',
 		   'test',
-		   'test_neuclar',
-		   'test_pynn',
-		   'calc_result',
+             'test_create_spikes',
+             'test_run',
+             'test_find_winner',
 		   'total']
 	for timing in timing_names:
          resultlines.append("{:<15s}: {:.4f} s\n".format(timing, timings[timing]))

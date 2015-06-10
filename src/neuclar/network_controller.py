@@ -166,8 +166,8 @@ class BrainController(object):
         pattern = pattern_tuple[1]
         target = pattern_tuple[2]
         self.set_pattern(pattern)
+        pat_creat_time = time.time()
         duration = self.config['simulation'].as_float('duration')
-        pre_run_time = time.time()
         self.run_network(duration)
         post_run_time = time.time()
         if self.pynn.__package__ == 'pyNN.hardware':
@@ -182,8 +182,9 @@ class BrainController(object):
         end_time = time.time()
         if not (timing_dict is None):
             timing_dict['total_test'] = end_time - start_time
+            timing_dict['create_spiketrains'] = pat_creat_time - start_time
             timing_dict['run'] = post_run_time - pre_run_time
-            timing_dict['manage_test'] = end_time - start_time - (post_run_time - pre_run_time)
+            timing_dict['compute_rates'] = end_time - post_run_time
         return dec_pop_rates
     
         
@@ -211,6 +212,7 @@ class BrainController(object):
         post_test_time = time.time()
         id = pattern_tuple[0]
         target = pattern_tuple[2]
+        # determine if classification is correct
         winner = numpy.argmax(dec_pop_rates)
         winner_id = class_ids[winner]
         dec_correct = winner_id == pattern_tuple[2]
@@ -219,9 +221,9 @@ class BrainController(object):
         lg.debug("dec_pop_rates: %s"%str(dec_pop_rates))
         lg.debug("argmax(dec_pop_rates): %d"%numpy.argmax(dec_pop_rates))
         lg.debug('class_ids: %s'%str(class_ids))
-
-        # determine if classification is correct
-        if numpy.sum(dec_pop_rates) > 1.:
+        assess_classification_time = time.time()        
+        
+        if numpy.sum(dec_pop_rates) > 1.: #there was at least one spike
             # update weights accordingly
             self.change_predec_weights_learning(dec_pop_rates, dec_correct)
             if self.config['learningrule'].as_bool('learn_AL_inh'):
@@ -239,6 +241,10 @@ class BrainController(object):
         end_time = time.time()
         if not (timing_dict is None):
             timing_dict['total_train'] = end_time - start_time
+            timing_dict['assess_classification'] = \
+                    assess_classification_time - post_test_time
+            timing_dict['compute_new_weights'] = \
+                    end_time - assess_classification_time
         return dec_pop_rates
 
     def change_predec_weights_const(self, dw):
