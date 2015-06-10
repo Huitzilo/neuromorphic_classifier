@@ -90,8 +90,6 @@ e_rev_I     = -80.0     # -80.0
 v_rest      = -65.0     # -65.0
 v_thresh    = -55.0     # -55.0
 g_leak      =  10.0     #  40.0
-tau_syn_E   =  5.0      #  30.0 doesn't have an impact in HW, but is important for compatibility with nest
-tau_syn_I   =  5.0      #  30.0
 
 [LN_params]
 v_reset     = -80.0     # -80.0
@@ -99,8 +97,6 @@ e_rev_I     = -80.0     # -80.0
 v_rest      = -65.0     # -65.0
 v_thresh    = -55.0     # -55.0
 g_leak      =  10.0     #  40.0
-tau_syn_E   =  5.0      #  30.0
-tau_syn_I   =  5.0      #  30.0
 
 [KC_params]
 v_reset     = -80.0     # -80.0
@@ -108,8 +104,6 @@ e_rev_I     = -80.0     # -80.0
 v_rest      = -65.0     # -65.0
 v_thresh    = -55.0     # -55.0
 g_leak      =  10.0     #  40.0
-tau_syn_E   =  5.0      #  30.0
-tau_syn_I   =  5.0      #  30.0
 
 [PCT_params]
 v_reset     = -80.0     # -80.0
@@ -117,8 +111,6 @@ e_rev_I     = -80.0     # -80.0
 v_rest      = -65.0     # -65.0
 v_thresh    = -55.0     # -55.0
 g_leak      =  10.0     #  40.0
-tau_syn_E   =  5.0      #  30.0
-tau_syn_I   =  5.0      #  30.0
 
 [DecN_params]
 v_reset     = -80.0     # -80.0
@@ -126,8 +118,6 @@ e_rev_I     = -80.0     # -80.0
 v_rest      = -65.0     # -65.0
 v_thresh    = -55.0     # -55.0
 g_leak      =  10.0     #  40.0
-tau_syn_E   =  5.0      #  30.0
-tau_syn_I   =  5.0      #  30.0
 """)
 software_example_config = configobj.ConfigObj(configstr)
 
