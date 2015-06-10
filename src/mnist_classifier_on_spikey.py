@@ -62,7 +62,9 @@ from timings import NeuclarTimings
 start_time = time.time()
 
 # doing the stuff
-p.setup(workStationName=workstation)
+perm = numpy.random.permutation(192) + 192
+perm = numpy.concatenate((perm, numpy.arange(192)))
+p.setup(workStationName=workstation, writeConfigToFile=False, neuronPermutation=list(perm))
 setup_time = time.time()
 
 # load data
