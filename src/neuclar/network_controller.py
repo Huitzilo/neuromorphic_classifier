@@ -183,7 +183,7 @@ class BrainController(object):
         if not (timing_dict is None):
             timing_dict['total_test'] = end_time - start_time
             timing_dict['create_spiketrains'] = pat_creat_time - start_time
-            timing_dict['run'] = post_run_time - pre_run_time
+            timing_dict['run'] = post_run_time - pat_creat_time
             timing_dict['compute_rates'] = end_time - post_run_time
         return dec_pop_rates
     

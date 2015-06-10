@@ -23,7 +23,7 @@ class NeuclarTimings(object):
                                
                                
     def update_training_times(self, timing_dict):
-        self.training_times['create_spiketrains'] += \
+        self.training_times['create_spike_trains'] += \
                                             timing_dict['create_spiketrains']
         self.training_times['run'] += timing_dict['run']
         self.training_times['identify_winner_pop'] += (
