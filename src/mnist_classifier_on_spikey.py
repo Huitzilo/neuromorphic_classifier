@@ -2,15 +2,15 @@
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-s", "--station", dest="workstation",
-                  help="spikey workstation to use", default="station666")
+                  help="spikey workstation to use (default: None)", default=None, type="string")
 parser.add_option("-n", "--num_data_samples", dest="num_data_samples", type="int",
-                  help="total number of data samples to use", default=200)
-parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used",
+                  help="total number of data samples to use (default: 200)", default=200)
+parser.add_option("-d", "--digits", dest="digits_txt", help="digits to be used (default: 5,7)",
                   default="5,7", type="string")
 parser.add_option("-o", "--output_file", dest='output_file', type="string",
-		  help="put detailed results in this file", default=None)
+		  help="put detailed results in this file (default: None)", default=None)
 parser.add_option("-r", "--retrain_VRs", dest='retrain_VRs', action='store_true',
-		  help='train a new Neural Gas instead of reusing default VRs',
+		  help='train a new Neural Gas instead of reusing default VRs (Default: False)',
 		  default=False)
 parser.add_option("--save_spiketrains", dest="save_spiketrains", 
                   type='string', default='no_store',
@@ -18,7 +18,8 @@ parser.add_option("--save_spiketrains", dest="save_spiketrains",
                        "The spiketrains will be stored in a file named \n" + 
                        "'spiketrains.pkl' as a pickled dictionary,\n"+
                        "with keys 'train' and 'test', each containing a list of\n" +
-                       "dictionaries that containing the actual spike trains.\n")
+                       "dictionaries that containing the actual spike trains.\n" +
+                       "Default is not to store spike trains.\n")
 
 options, args = parser.parse_args()
 
@@ -40,7 +41,7 @@ logging.basicConfig()
 lg = logging.getLogger('mnist_classifier_on_spikey')
 lg.setLevel(logging.INFO)
 try:
-	import pyNN.hardware.stage1 as p
+	import pyNN.hardware.spikey as p
 except ImportError, e:
 	print('ImportError: {}.\n'.format(e.message))
 	print("Failed to import the hardware PyNN module. \n")
@@ -64,7 +65,11 @@ start_time = time.time()
 # doing the stuff
 perm = numpy.random.permutation(192) + 192
 perm = numpy.concatenate((perm, numpy.arange(192)))
-p.setup(workStationName=workstation, writeConfigToFile=False, neuronPermutation=list(perm))
+setupargs = dict(writeConfigToFile=False, neuronPermutation=list(perm))
+if not (workstation is None):
+        setupargs['workStationName'] = workstation
+p.setup(**setupargs)
+p.setup()
 setup_time = time.time()
 
 # load data
@@ -84,7 +89,14 @@ if retrain:
 	testing_data_vr = vrs.sample_data(testing_data)
 else:
 	vrposfilename = "vrpos-{}_{}.npy".format("".join(["{}".format(d) for d in digits]), num_data_samples)
-	samplepoints = numpy.load(vrposfilename)
+        try:
+                samplepoints = numpy.load(vrposfilename)
+        except IOError, e:
+                print("\n================================================================\n" +
+                      "The file with VR positions for the requested task was not found.\n" +
+                      "Consider using the -r option.\n" +
+                      "================================================================\n")
+                raise(e)
 	training_data_vr = vrconvert.vrconvert(training_data, samplepoints)
 	testing_data_vr = vrconvert.vrconvert(testing_data, samplepoints)
 

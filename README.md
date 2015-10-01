@@ -10,12 +10,27 @@ How to run an example:
     Usage: mnist_classifier_on_spikey.py [options]
     
     Options:
-      -h, --help            show this help message and exit
-      -s WORKSTATION, --station=WORKSTATION
-                            spikey workstation to use
-      -n NUM_DATA_SAMPLES, --num_data_samples=NUM_DATA_SAMPLES
-                            number of data samples from each class to use
-    $ python mnist_classifier_on_spikey.py -n 200 -s station112 
+	  -h, --help            show this help message and exit
+	  -s WORKSTATION, --station=WORKSTATION
+		                spikey workstation to use (default: None)
+	  -n NUM_DATA_SAMPLES, --num_data_samples=NUM_DATA_SAMPLES
+		                total number of data samples to use (default: 200)
+	  -d DIGITS_TXT, --digits=DIGITS_TXT
+		                digits to be used (default: 5,7)
+	  -o OUTPUT_FILE, --output_file=OUTPUT_FILE
+		                put detailed results in this file (default: None)
+	  -r, --retrain_VRs     train a new Neural Gas instead of reusing default VRs
+		                (Default: False)
+	  --save_spiketrains=SAVE_SPIKETRAINS
+		                specify a file in which to store the spike trains. The
+		                spiketrains will be stored in a file named
+		                'spiketrains.pkl' as a pickled dictionary, with keys
+		                'train' and 'test', each containing a list of
+		                dictionaries that containing the actual spike trains.
+		                Default is not to store spike trains.
+For example, if you want to clasify digits 4 and 8, using 300 samples per digit, and write the output into a file called "4_8_300.txt", you'd use
+
+    $ python mnist_classifier_on_spikey.py -n 300 -d 4,8 -o 4_8_300.txt -r
     [...]
 
 The above will only work if you have access to a 'Spikey' chip. If you'd rather like to run it using a simulator, and are willing to help in the porting process, please raise an issue with the repository. 
